@@ -479,12 +479,227 @@ if __name__ == "__main__":
     app.mainloop()
 '''
 
-import os
-from tkinter import messagebox
 import customtkinter
+from CTkMenuBar import *
+from tkinter import StringVar
 from PIL import Image
+from random import randint
+import os
 
-customtkinter.set_appearance_mode("dark")
+
+class SignIn(customtkinter.CTkToplevel):
+    def __init__(self, master=None):
+        super().__init__(master)
+
+        self.exit_from_form = None
+        self.sign_in = None
+        self.login_event = None
+        self.title("Bricks")
+        self.geometry("900x600")
+        self.resizable(False, False)
+
+        # Load and create background image
+        current_path = os.path.dirname(os.path.realpath(__file__))
+        image_path = os.path.join(current_path, "img", "background.jpg")
+        self.bg_image = customtkinter.CTkImage(Image.open(image_path), size=(900, 600))
+        self.bg_image_label = customtkinter.CTkLabel(self, image=self.bg_image)
+        self.bg_image_label.grid(row=0, column=0)
+
+        # create login frame
+        self.login_frame = customtkinter.CTkFrame(self, corner_radius=0)
+        self.login_frame.grid(row=0, column=0, sticky="ns")
+        self.login_label = customtkinter.CTkLabel(self.login_frame, text="Hello!",
+                                                  font=("Roboto", 32, "bold"))
+        self.login_label.grid(row=0, pady=15, sticky="n")
+        self.username_entry = customtkinter.CTkEntry(self.login_frame, width=200, placeholder_text="username")
+        self.username_entry.grid(row=1, column=0, padx=30, pady=(15, 15))
+        self.password_entry = customtkinter.CTkEntry(self.login_frame, width=200, show="*",
+                                                     placeholder_text="password")
+        self.password_entry.grid(row=2, column=0, padx=30, pady=(0, 15))
+        self.mail_entry = customtkinter.CTkEntry(self.login_frame, width=200, placeholder_text="email")
+        self.mail_entry.grid(row=3, column=0, padx=30, pady=(0, 15))
+        self.login_button = customtkinter.CTkButton(self.login_frame, text="Login", command=self.login_event,
+                                                    width=100)
+        self.login_button.grid(row=4, column=0, pady=(0, 10))
+        self.reg_lab = customtkinter.CTkLabel(self.login_frame, text="Не имеешь аккаунта?",
+                                              font=("Roboto", 16, "bold"))
+        self.reg_lab.grid(row=5, column=0, pady=(50, 10))
+        self.reg_but = customtkinter.CTkButton(self.login_frame, text="Sign In", command=self.sign_in, width=75)
+        self.reg_but.grid(row=6, column=0)
+        self.exit_button = customtkinter.CTkButton(self.login_frame, text="Exit", width=40, height=30,
+                                                   command=self.exit_from_form)
+        self.exit_button.grid(row=7, column=0, pady=(200, 0))
+
+
+class BricksApp(customtkinter.CTkToplevel):
+
+    def __init__(self, master=None):
+        super().__init__(master)
+
+        self.title("Bricks")
+        self.geometry("900x600")
+        self.resizable(False, False)
+
+        # Load and create background image
+        current_path = os.path.dirname(os.path.realpath(__file__))
+        image_path = os.path.join(current_path, "img", "background.jpg")
+        self.bg_image = customtkinter.CTkImage(Image.open(image_path), size=(900, 600))
+        self.bg_image_label = customtkinter.CTkLabel(self, image=self.bg_image)
+        self.bg_image_label.grid(row=0, column=0)
+
+        # Number of remaining bricks
+        self.bricks_label = customtkinter.CTkLabel(master=self, text="Remaining Bricks 🧱:",
+                                                   font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.bricks_label.grid(row=0, column=0, sticky="N", pady=5)
+        self.bricks_amount = randint(12, 20)  # Assuming bricks_amount will be set later
+        self.remaining_bricks_var = customtkinter.StringVar(value=str(self.bricks_amount))
+        self.remaining_bricks_string = customtkinter.CTkLabel(master=self, textvariable=self.remaining_bricks_var,
+                                                              font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.remaining_bricks_string.grid(row=0, column=0, sticky="N", pady=40)
+
+        # Frame for human player's turn
+        self.human_turn_frame = customtkinter.CTkFrame(master=self)
+        self.human_turn_frame.grid(row=0, column=0, sticky="w")
+
+        # Label for human player's turn
+        self.human_turn_label = customtkinter.CTkLabel(self.human_turn_frame, text="Your turn:",
+                                                       font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.human_turn_label.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
+
+        # Buttons for human player's turn
+        self.take_one = customtkinter.CTkButton(self.human_turn_frame, text="Take 1", width=100,
+                                                command=lambda: self.turn(1))
+        self.take_one.grid(row=1, column=0, padx=5, pady=5)
+        self.take_two = customtkinter.CTkButton(self.human_turn_frame, text="Take 2", width=100,
+                                                command=lambda: self.turn(2))
+        self.take_two.grid(row=2, column=0, padx=5, pady=5)
+        self.take_three = customtkinter.CTkButton(self.human_turn_frame, text="Take 3", width=100,
+                                                  command=lambda: self.turn(3))
+        self.take_three.grid(row=3, column=0, padx=5, pady=5)
+
+        # Frame for computer player's turn
+        self.comp_turn_frame = customtkinter.CTkFrame(self)
+        self.comp_turn_frame.place(relx=1, rely=0.5, anchor="e")
+
+        self.comp_turn_label = customtkinter.CTkLabel(self.comp_turn_frame, text="Computer's Turn:",
+                                                      font=customtkinter.CTkFont(size=14))
+        self.comp_turn_label.pack(pady=5)
+
+        self.comp_do_var = StringVar(value="Your turn first")
+        self.comp_do = customtkinter.CTkLabel(self.comp_turn_frame, textvariable=self.comp_do_var,
+                                              font=customtkinter.CTkFont(size=12))
+        self.comp_do.pack()
+
+        # Result label
+        self.result_game = customtkinter.CTkLabel(self, font=customtkinter.CTkFont(size=16))
+        self.result_game.place(relx=0.5, rely=0.5, anchor="n")
+
+        # Win statistics
+        self.win_statistics_count = 0
+        self.win_statistics_label = customtkinter.CTkLabel(self, text="Games Won: 0",
+                                                           font=customtkinter.CTkFont(size=14))
+        self.win_statistics_label.place(relx=0.5, rely=1, anchor="s")
+
+        self.create_menu()
+
+    def create_menu(self):
+        menu = CTkTitleMenu(self.master)
+        button_1 = menu.add_cascade("Game")
+
+        dropdown1 = CustomDropdownMenu(widget=button_1)
+        dropdown1.add_option(option="New game", command=lambda: self.play_again())
+        dropdown1.add_option(option="Main menu")
+        dropdown1.add_option(option="Statistics")
+        dropdown1.add_option(option="Exit", command=lambda: self.exit_the_game())
+
+    def turn(self, amount):
+        # Human's turn
+        self.bricks_amount = self.bricks_amount - amount
+        self.remaining_bricks_var.set(str(self.bricks_amount))
+
+        # Check for game outcomes after human's turn
+        if self.bricks_amount == 0:
+            # Human wins
+            self.win_statistics_count += 1
+            self.result_game = customtkinter.CTkLabel(self, text="Вы победили!", fg_color="green")
+            self.result_game.place(relx=0.5, rely=0.5, anchor="center")
+            self.disable()
+        elif self.bricks_amount < 4:
+            # Human loses
+            self.comp_do_var.set("Взял {0}".format(self.bricks_amount))
+            self.bricks_amount = 0
+            self.result_game = customtkinter.CTkLabel(self, text="Вы проиграли", fg_color="red")
+            self.result_game.place(relx=0.5, rely=0.5, anchor="center")
+            self.disable()
+
+        # Update the text for remaining bricks
+        self.remaining_bricks_var.set(str(self.bricks_amount))
+
+        # Disable buttons when there are fewer bricks than available for the human to choose
+        if self.bricks_amount == 1:
+            self.take_two.configure(state="disabled")
+            self.take_three.configure(state="disabled")
+        elif self.bricks_amount == 2:
+            self.take_three.configure(state="disabled")
+
+        self.update_idletasks()  # Force an immediate redraw
+
+        # Computer's turn
+        if self.bricks_amount > 0:
+            comp_turn = randint(1, min(3, self.bricks_amount))
+            self.bricks_amount = self.bricks_amount - comp_turn
+            self.comp_do_var.set("Взял {0}".format(comp_turn))
+
+            # Update the text for remaining bricks
+            self.remaining_bricks_var.set(str(self.bricks_amount))
+
+            # Disable buttons when there are fewer bricks than available for the human to choose
+            if self.bricks_amount == 1:
+                self.take_two.configure(state="disabled")
+                self.take_three.configure(state="disabled")
+            elif self.bricks_amount == 2:
+                self.take_three.configure(state="disabled")
+
+            # Check for game outcomes after computer's turn
+            if self.bricks_amount == 0:
+                # Computer wins
+                self.result_game = customtkinter.CTkLabel(self, text="Вы проиграли", fg_color="red")
+                self.result_game.place(relx=0.5, rely=0.5, anchor="center")
+                self.disable()
+
+        self.update_idletasks()  # Force an immediate redraw
+
+    def disable(self):
+        self.take_one.configure(state="disabled")
+        self.take_two.configure(state="disabled")
+        self.take_three.configure(state="disabled")
+
+    def enable_buttons(self):
+        self.take_one.configure(state="normal")
+        self.take_two.configure(state="normal")
+        self.take_three.configure(state="normal")
+
+    def play_again(self):
+        self.bricks_amount = randint(12, 20)
+        self.remaining_bricks_var.set(str(self.bricks_amount))
+        self.result_game["fg"] = "grey"
+        self.result_game.place_forget()
+        self.enable_buttons()
+
+    def exit_the_game(self):
+        self.save()
+        self.quit()
+
+    def save(self):
+        file_save = open('Statistics.txt', 'w')
+        file_save.write(f"Games Won: {self.win_statistics_count}")
+        file_save.close()
+
+
+def authenticate(password):
+    # Replace this with your actual authentication logic
+    # For simplicity, it always returns True for demonstration purposes
+    return True
 
 
 class Auth(customtkinter.CTk):
@@ -493,6 +708,8 @@ class Auth(customtkinter.CTk):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.SignIn = None
+        self.BricksApp = None
         # self.mb = None
         self.title("CustomTkinter Game")
         self.geometry(f"{self.width}x{self.height}")
@@ -513,20 +730,24 @@ class Auth(customtkinter.CTk):
         self.login_label.grid(row=0, pady=15, sticky="n")
         self.username_entry = customtkinter.CTkEntry(self.login_frame, width=200, placeholder_text="username")
         self.username_entry.grid(row=1, column=0, padx=30, pady=(15, 15))
-        self.password_entry = customtkinter.CTkEntry(self.login_frame, width=200, show="*", placeholder_text="password")
+        self.password_entry = customtkinter.CTkEntry(self.login_frame, width=200, show="*",
+                                                     placeholder_text="password")
         self.password_entry.grid(row=2, column=0, padx=30, pady=(0, 15))
         self.mail_entry = customtkinter.CTkEntry(self.login_frame, width=200, placeholder_text="email")
         self.mail_entry.grid(row=3, column=0, padx=30, pady=(0, 15))
-        self.login_button = customtkinter.CTkButton(self.login_frame, text="Login", command=self.login_event, width=100)
+        self.login_button = customtkinter.CTkButton(self.login_frame, text="Login", command=self.login_event,
+                                                    width=100)
         self.login_button.grid(row=4, column=0, pady=(0, 10))
         self.reg_lab = customtkinter.CTkLabel(self.login_frame, text="Не имеешь аккаунта?",
                                               font=("Roboto", 16, "bold"))
         self.reg_lab.grid(row=5, column=0, pady=(50, 10))
-        self.reg_but = customtkinter.CTkButton(self.login_frame, text="Sign In", command=self.sign_in, width=75)
+        self.reg_but = customtkinter.CTkButton(self.login_frame, text="Sign In", command=self.open_sign_in_window,
+                                               width=75)
         self.reg_but.grid(row=6, column=0)
         self.exit_button = customtkinter.CTkButton(self.login_frame, text="Exit", width=40, height=30,
                                                    command=self.exit_from_form)
         self.exit_button.grid(row=7, column=0, pady=(200, 0))
+
         # self.gen_lab = customtkinter.CTkLabel(self.login_frame, text="Выберите пол", font=("Roboto", 12, "bold"))
         # self.gen_lab.grid(row=0, column=3)
 
@@ -552,52 +773,32 @@ class Auth(customtkinter.CTk):
         # self.reg_lab.grid(row=10, column=1, sticky="s")
 
     def login_event(self):
-        print("Login pressed - username:", self.username_entry.get(), "password:", self.password_entry.get(),
-              "email:", self.mail_entry.get())
+        print("Login pressed - username:", self.username_entry.get(), "password:", self.password_entry.get())
 
-        # Check login logic here
-        # For example, if login is successful, switch to the main window
-        self.login_frame.grid_forget()  # remove login frame
-        # self.main_frame.grid(row=0, column=0, sticky="nsew", padx=100)  # show main frame
-        bricks = App()
-        bricks.game()  # start the game
+        # Check login credentials (replace this with your actual authentication logic)
+        if authenticate(self.username_entry.get() and self.password_entry.get()):
 
-    def sign_in(self):
+            # Open the BricksApp window upon successful login
+            self.BricksApp = BricksApp(self)
+
+        else:
+            print("Login failed. Invalid credentials.")
+
+    def open_sign_in_window(self):
+
+        self.SignIn = SignIn(self)
+
+    def exit_from_form(self):
         pass
 
     def back_event(self):
-        # self.main_frame.grid_forget()  # remove main frame
         self.login_frame.grid(row=0, column=0, sticky="ns")  # show login frame
 
-    def exit_from_form(self):
-        response = messagebox.askokcancel("Выход", "Вы действительно хотите выйти?")
-        if response:
-            self.destroy()
 
+app = Auth()
+app.mainloop()
 
-class App(customtkinter.CTk):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.auth_frame = Auth()  # Передаем ссылку на объект App в объект Auth
-        self.auth_frame.grid(row=0, column=0, sticky="nsew")
-
-    def game(self):
-        # create main frame
-        main_frame = customtkinter.CTkFrame(self, corner_radius=0)
-        main_frame.grid_columnconfigure(0, weight=1)
-        main_label = customtkinter.CTkLabel(main_frame, text="CustomTkinter\nMain Page",
-                                            font=customtkinter.CTkFont(size=20, weight="bold"))
-        main_label.grid(row=0, column=0, padx=30, pady=(30, 15))
-        back_button = customtkinter.CTkButton(main_frame, text="Back", width=200)
-        back_button.grid(row=1, column=0, padx=30, pady=(15, 15))
-
-
-if __name__ == "__main__":
-    bricks = App()
-    bricks.mainloop()
-
-    """
+"""
         count_stones = 0
         count_scissors = 0
         count_papers = 0
