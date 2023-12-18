@@ -487,30 +487,30 @@ from tkinter import StringVar
 from PIL import Image
 from random import randint
 import os
+import re
 
 
 class SignIn(customtkinter.CTkToplevel):
-    def __init__(self, master=None):
+    def __init__(self, master=None, exit_command=None):
         super().__init__(master)
 
-        self.exit_from_form = None
-        self.sign_in = None
-        self.login_event = None
-        self.title("Bricks")
-        self.geometry("900x600")
+        self.exit_from_form = exit_command
+
+        self.title("SignIn")
+        self.geometry("900x900")
         self.resizable(False, False)
 
         # Load and create background image
         current_path = os.path.dirname(os.path.realpath(__file__))
         image_path = os.path.join(current_path, "img", "bg_gradient.jpg")
-        self.bg_image = customtkinter.CTkImage(Image.open(image_path), size=(900, 600))
+        self.bg_image = customtkinter.CTkImage(Image.open(image_path), size=(900, 900))
         self.bg_image_label = customtkinter.CTkLabel(self, image=self.bg_image)
         self.bg_image_label.grid(row=0, column=0)
 
         # create login frame
         self.login_frame = customtkinter.CTkFrame(self, corner_radius=0)
         self.login_frame.grid(row=0, column=0, sticky="ns")
-        self.login_label = customtkinter.CTkLabel(self.login_frame, text="Hello!",
+        self.login_label = customtkinter.CTkLabel(self.login_frame, text="Registrarion",
                                                   font=("Roboto", 32, "bold"))
         self.login_label.grid(row=0, pady=15, sticky="n")
         self.username_entry = customtkinter.CTkEntry(self.login_frame, width=200, placeholder_text="username")
@@ -520,21 +520,72 @@ class SignIn(customtkinter.CTkToplevel):
         self.password_entry.grid(row=2, column=0, padx=30, pady=(0, 15))
         self.mail_entry = customtkinter.CTkEntry(self.login_frame, width=200, placeholder_text="email")
         self.mail_entry.grid(row=3, column=0, padx=30, pady=(0, 15))
-        self.login_button = customtkinter.CTkButton(self.login_frame, text="Sign In", command=self.login_event,
+
+        self.gen_lab = customtkinter.CTkLabel(self.login_frame, text="Выберите пол", font=("Roboto", 16, "bold"))
+        self.gen_lab.grid(row=4, column=0, pady=10)
+
+        self.gender = customtkinter.StringVar()
+        self.female_rad = customtkinter.CTkRadioButton(self.login_frame, text="Женщина", fg_color="#FFF",
+                                                       value="Женщина",
+                                                       variable=self.gender)
+        self.female_rad.grid(row=5, column=0, pady=10)
+        self.male_rad = customtkinter.CTkRadioButton(self.login_frame, text="Мужчина", fg_color="#FFF", value="Мужчина",
+                                                     variable=self.gender)
+        self.male_rad.grid(row=6, column=0, pady=10)
+
+        # Создаем список
+        self.age_lab = customtkinter.CTkLabel(self.login_frame, text="Укажите свой диапазон \n возраста",
+                                              font=("Roboto", 16, "bold"))
+        self.age_lab.grid(row=7, column=0, pady=(20, 20))
+
+        self.optionmenu_1 = customtkinter.CTkOptionMenu(self.login_frame, dynamic_resizing=False,
+                                                        values=["", "0-18", "18-35", "35+"])
+        self.optionmenu_1.grid(row=8, column=0)
+
+        self.login_button = customtkinter.CTkButton(self.login_frame, text="Sign In", command=self.sign_in_event,
                                                     width=100)
-        self.login_button.grid(row=4, column=0, pady=(0, 10))
-        current_path1 = os.path.dirname(os.path.realpath(__file__))
-        image_path1 = os.path.join(current_path1, "img", "bg_gradient.jpg")
-        self.bg_image = customtkinter.CTkImage(Image.open(image_path1), size=(50, 50))
-        self.return_button = customtkinter.CTkButton(self.login_frame, command=self.return_back, width=100)
-        self.return_button.grid(row=5, column=0)
+        self.login_button.grid(row=9, column=0, pady=(50, 10))
+
+        self.button_image = customtkinter.CTkImage(Image.open("img/return.png"), size=(26, 26))
+        self.return_button = customtkinter.CTkButton(self.login_frame, text="", command=self.return_back, width=100,
+                                                     image=self.button_image)
+        self.return_button.grid(row=10, column=0)
 
         self.exit_button = customtkinter.CTkButton(self.login_frame, text="Exit", width=40, height=30,
                                                    command=self.exit_from_form)
-        self.exit_button.grid(row=7, column=0, pady=(200, 0))
+        self.exit_button.grid(row=10, column=1)
+
+    def sign_in_event(self):
+        player_login_reg = self.username_entry.get()
+        player_password_reg = self.password_entry.get()
+        player_email_reg = self.mail_entry.get()
+        player_gender_reg = self.gender.get()
+        player_age_range = self.optionmenu_1.get()
+
+        # Проверка заполнения всех полей
+        if not all([player_login_reg, player_password_reg, player_email_reg, player_gender_reg, player_age_range]):
+            # Если какое-то поле не заполнено, выведите сообщение об ошибке
+            print("Please fill in all fields.")
+            return
+
+        # Проверка формата электронной почты
+        if not re.fullmatch(r'[\w.-]+@[\w.-]+(\.\w+)+', player_email_reg):
+            print("Invalid email format.")
+            return
+
+        # Проверка длины логина и пароля
+        if len(player_login_reg) < 4 or len(player_password_reg) < 8:
+            print("Login or password is too short.")
+            return
+
+        # Дополнительные проверки или проверка на существование пользователя
+        # (здесь вы можете использовать вашу логику из примера)
+
+        # Переход на экран игры (просто пример, замените на ваш реальный код)
+        self.destroy()
 
     def return_back(self):
-        self.Auth = Auth(self)
+        self.destroy()
 
 
 class BricksApp(customtkinter.CTkToplevel):
@@ -717,7 +768,7 @@ class Auth(customtkinter.CTk):
         self.SignIn = None
         self.BricksApp = None
         # self.mb = None
-        self.title("CustomTkinter Game")
+        self.title("Auth")
         self.geometry(f"{self.width}x{self.height}")
         self.resizable(False, False)
 
@@ -752,30 +803,6 @@ class Auth(customtkinter.CTk):
                                                    command=self.exit_from_form)
         self.exit_button.grid(row=7, column=0, pady=(200, 0))
 
-        # self.gen_lab = customtkinter.CTkLabel(self.login_frame, text="Выберите пол", font=("Roboto", 12, "bold"))
-        # self.gen_lab.grid(row=0, column=3)
-
-        # self.gender = customtkinter.StringVar()
-        # self.female_rad = customtkinter.CTkRadioButton(self.login_frame, text="Женщина", fg_color="#FFF", value="Женщина",
-        #  variable=self.gender)
-        # self.female_rad.grid(row=1, column=3, pady=10)
-        # self.male_rad = customtkinter.CTkRadioButton(self.login_frame, text="Мужчина", fg_color="#FFF", value="Мужчина",
-        # variable=self.gender)
-        # self.male_rad.grid(row=2, column=3, pady=10)
-
-        # Создаем список
-        # self.age_lab = customtkinter.CTkLabel(self.login_frame, text="Укажите свой диапазон \n возраста",
-        # font=("Roboto", 12, "bold"))
-        # self.age_lab.grid(row=3, column=3, pady=(20, 20))
-
-        # self.optionmenu_1 = customtkinter.CTkOptionMenu(self.login_frame, dynamic_resizing=False,
-        # values=["", "0-18", "18-35", "35+"])
-        # self.optionmenu_1.grid(row=4, column=3)
-
-        # self.reg_lab = customtkinter.CTkLabel(self.login_frame, text="Не имеешь аккаунта?",
-        # font=("Roboto", 12, "bold"))
-        # self.reg_lab.grid(row=10, column=1, sticky="s")
-
     def login_event(self):
         print("Login pressed - username:", self.username_entry.get(), "password:", self.password_entry.get())
 
@@ -790,13 +817,11 @@ class Auth(customtkinter.CTk):
 
     def open_sign_in_window(self):
 
-        self.SignIn = SignIn(self)
+        self.SignIn = SignIn(self, exit_command=self.exit_from_form)
 
     def exit_from_form(self):
+        self.destroy()
         pass
-
-    def back_event(self):
-        self.login_frame.grid(row=0, column=0, sticky="ns")  # show login frame
 
 
 app = Auth()
