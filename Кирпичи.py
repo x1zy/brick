@@ -488,22 +488,135 @@ from PIL import Image
 from random import randint
 import os
 import re
+from tkinter import messagebox
 
 
-class SignIn(customtkinter.CTkToplevel):
-    def __init__(self, master=None, exit_command=None):
-        super().__init__(master)
+class Auth(customtkinter.CTk):
+    width = 900
+    height = 600
 
-        self.exit_from_form = exit_command
-
-        self.title("SignIn")
-        self.geometry("900x900")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.SignIn = None
+        self.BricksApp = None
+        # self.mb = None
+        self.title("Auth")
+        self.geometry(f"{self.width}x{self.height}")
         self.resizable(False, False)
 
         # Load and create background image
         current_path = os.path.dirname(os.path.realpath(__file__))
         image_path = os.path.join(current_path, "img", "bg_gradient.jpg")
-        self.bg_image = customtkinter.CTkImage(Image.open(image_path), size=(900, 900))
+        self.bg_image = customtkinter.CTkImage(Image.open(image_path), size=(900, 600))
+        self.bg_image_label = customtkinter.CTkLabel(self, image=self.bg_image)
+        self.bg_image_label.grid(row=0, column=0)
+
+        # create login frame
+        self.login_frame = customtkinter.CTkFrame(self, corner_radius=0)
+        self.login_frame.grid(row=0, column=0, sticky="ns")
+        self.login_label = customtkinter.CTkLabel(self.login_frame, text="Hello!",
+                                                  font=("Roboto", 32, "bold"))
+        self.login_label.grid(row=0, pady=15, sticky="n")
+        self.username_entry = customtkinter.CTkEntry(self.login_frame, width=200, placeholder_text="username")
+        self.username_entry.grid(row=1, column=0, padx=30, pady=(15, 15))
+        self.password_entry = customtkinter.CTkEntry(self.login_frame, width=200, show="*",
+                                                     placeholder_text="password")
+        self.password_entry.grid(row=2, column=0, padx=30, pady=(0, 15))
+        self.login_button = customtkinter.CTkButton(self.login_frame, text="Login", command=self.login_event,
+                                                    width=100)
+        self.login_button.grid(row=4, column=0, pady=(0, 10))
+        self.reg_lab = customtkinter.CTkLabel(self.login_frame, text="Не имеешь аккаунта?",
+                                              font=("Roboto", 16, "bold"))
+        self.reg_lab.grid(row=5, column=0, pady=(50, 10))
+        self.reg_but = customtkinter.CTkButton(self.login_frame, text="Sign In", command=self.open_sign_in_window,
+                                               width=75)
+        self.reg_but.grid(row=6, column=0)
+        self.exit_button = customtkinter.CTkButton(self.login_frame, text="Exit", width=40, height=30,
+                                                   command=self.exit_from_form)
+        self.exit_button.grid(row=7, column=0, pady=(200, 0))
+
+    def login_event(self):
+        print("Login pressed - username:", self.username_entry.get(), "password:", self.password_entry.get())
+
+        # Check login credentials (replace this with your actual authentication logic)
+        if self.check_user_log(self.username_entry.get(), self.password_entry.get()):
+            # Open the BricksApp window upon successful login
+            self.BricksApp = BricksApp(self, self.username_entry.get())
+        else:
+            messagebox.showinfo("Login Failed", "Invalid credentials. Please try again.", parent=self)
+
+    def register_event(self, player_login, player_password, player_email, player_gender, player_age_range):
+        # Check if the username and password meet your criteria
+        if len(player_login) < 4 or len(player_password) < 8:
+            messagebox.showinfo("Login Failed", "Login or password is too short.", parent=self)
+            return
+
+        # Check if the username is already taken
+        if self.check_new_user_reg(player_login):
+            messagebox.showinfo("Login Failed", "Username is already taken.", parent=self)
+            return
+
+        # Perform additional checks if needed
+
+        # Add the new user
+        self.add_new_user(player_login, player_password, player_email, player_gender, player_age_range)
+
+        # Open the BricksApp window upon successful registration
+        self.BricksApp = BricksApp(self, player_login)
+
+    def add_new_user(self, player_login, player_password, player_email, player_gender, player_age_range):
+        """Функция записи данных пользователя в файл"""
+        file = open('DatabaseForGame.txt', 'a')
+        file.write(
+            f"{'%%'.join([player_login, player_password, player_email, player_gender, player_age_range, '0', '0', '0', '0', '0', '0'])}\n")
+        file.close()
+
+    def check_user_log(self, login, password):
+        file = open('DatabaseForGame.txt')
+        for line in file:
+            player_list = line.split('%%')
+            if login == player_list[0] and password == player_list[1]:
+                return True
+        file.close()
+        return False
+
+    def check_new_user_reg(self, login):
+        file = open('DatabaseForGame.txt')
+        for line in file:
+            if login == line.split('%%')[0]:
+                return True
+        file.close()
+        return False
+
+    def exit_from_form(self):
+        self.destroy()
+
+    def open_sign_in_window(self):
+        self.SignIn = SignIn(master=self, exit_command=self.exit_from_form, register_command=self.register_event,
+                             auth_instance=self)
+        self.SignIn.focus_force()
+
+
+class SignIn(customtkinter.CTkToplevel):
+    def __init__(self, master=None, exit_command=None, register_command=None, auth_instance=None):
+        super().__init__(master)
+
+        self.attributes("-topmost", True)
+
+        self.player_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.exit_from_form = exit_command
+        self.register_event = register_command
+
+        self.exit_from_form = exit_command
+
+        self.title("SignIn")
+        self.geometry("900x700")
+        self.resizable(False, False)
+
+        # Load and create background image
+        current_path = os.path.dirname(os.path.realpath(__file__))
+        image_path = os.path.join(current_path, "img", "bg_gradient.jpg")
+        self.bg_image = customtkinter.CTkImage(Image.open(image_path), size=(900, 700))
         self.bg_image_label = customtkinter.CTkLabel(self, image=self.bg_image)
         self.bg_image_label.grid(row=0, column=0)
 
@@ -544,16 +657,18 @@ class SignIn(customtkinter.CTkToplevel):
 
         self.login_button = customtkinter.CTkButton(self.login_frame, text="Sign In", command=self.sign_in_event,
                                                     width=100)
-        self.login_button.grid(row=9, column=0, pady=(50, 10))
+        self.login_button.grid(row=9, column=0, pady=(50, 50))
 
         self.button_image = customtkinter.CTkImage(Image.open("img/return.png"), size=(26, 26))
         self.return_button = customtkinter.CTkButton(self.login_frame, text="", command=self.return_back, width=100,
                                                      image=self.button_image)
-        self.return_button.grid(row=10, column=0)
+        self.return_button.grid(row=10, column=0, pady=(0, 10))
 
         self.exit_button = customtkinter.CTkButton(self.login_frame, text="Exit", width=40, height=30,
                                                    command=self.exit_from_form)
-        self.exit_button.grid(row=10, column=1)
+        self.exit_button.grid(row=11, column=0)
+
+        self.auth_instance = auth_instance
 
     def sign_in_event(self):
         player_login_reg = self.username_entry.get()
@@ -565,24 +680,31 @@ class SignIn(customtkinter.CTkToplevel):
         # Проверка заполнения всех полей
         if not all([player_login_reg, player_password_reg, player_email_reg, player_gender_reg, player_age_range]):
             # Если какое-то поле не заполнено, выведите сообщение об ошибке
-            print("Please fill in all fields.")
+            messagebox.showinfo("Login Failed", "Please fill in all fields.", parent=self)
             return
 
         # Проверка формата электронной почты
         if not re.fullmatch(r'[\w.-]+@[\w.-]+(\.\w+)+', player_email_reg):
-            print("Invalid email format.")
+            messagebox.showinfo("Login Failed", "Invalid email format.", parent=self)
             return
 
         # Проверка длины логина и пароля
         if len(player_login_reg) < 4 or len(player_password_reg) < 8:
-            print("Login or password is too short.")
+            messagebox.showinfo("Login Failed", "Login or password is too short.", parent=self)
             return
 
-        # Дополнительные проверки или проверка на существование пользователя
-        # (здесь вы можете использовать вашу логику из примера)
+        if self.auth_instance.check_new_user_reg(player_login_reg):
+            messagebox.showinfo("Login Failed", "A user with this login already exists", parent=self)
+        else:
+            self.auth_instance.add_new_user(player_login_reg, player_password_reg, player_email_reg, player_gender_reg,
+                                            player_age_range)
+            # destroySingUp()
+            self.register_event(player_login_reg, player_password_reg, player_email_reg, player_gender_reg,
+                                player_age_range)
+            print("Все гуд")
 
-        # Переход на экран игры (просто пример, замените на ваш реальный код)
-        self.destroy()
+            # Переход на экран игры (просто пример, замените на ваш реальный код)
+            self.destroy()
 
     def return_back(self):
         self.destroy()
@@ -590,12 +712,17 @@ class SignIn(customtkinter.CTkToplevel):
 
 class BricksApp(customtkinter.CTkToplevel):
 
-    def __init__(self, master=None):
+    def __init__(self, master=None, username=""):
         super().__init__(master)
 
         self.title("Bricks")
         self.geometry("900x600")
         self.resizable(False, False)
+
+        self.username = username
+
+        self.victories = 0
+        self.losses = 0
 
         # Load and create background image
         current_path = os.path.dirname(os.path.realpath(__file__))
@@ -759,284 +886,6 @@ def authenticate(password):
     return True
 
 
-class Auth(customtkinter.CTk):
-    width = 900
-    height = 600
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.SignIn = None
-        self.BricksApp = None
-        # self.mb = None
-        self.title("Auth")
-        self.geometry(f"{self.width}x{self.height}")
-        self.resizable(False, False)
-
-        # Load and create background image
-        current_path = os.path.dirname(os.path.realpath(__file__))
-        image_path = os.path.join(current_path, "img", "bg_gradient.jpg")
-        self.bg_image = customtkinter.CTkImage(Image.open(image_path), size=(900, 600))
-        self.bg_image_label = customtkinter.CTkLabel(self, image=self.bg_image)
-        self.bg_image_label.grid(row=0, column=0)
-
-        # create login frame
-        self.login_frame = customtkinter.CTkFrame(self, corner_radius=0)
-        self.login_frame.grid(row=0, column=0, sticky="ns")
-        self.login_label = customtkinter.CTkLabel(self.login_frame, text="Hello!",
-                                                  font=("Roboto", 32, "bold"))
-        self.login_label.grid(row=0, pady=15, sticky="n")
-        self.username_entry = customtkinter.CTkEntry(self.login_frame, width=200, placeholder_text="username")
-        self.username_entry.grid(row=1, column=0, padx=30, pady=(15, 15))
-        self.password_entry = customtkinter.CTkEntry(self.login_frame, width=200, show="*",
-                                                     placeholder_text="password")
-        self.password_entry.grid(row=2, column=0, padx=30, pady=(0, 15))
-        self.login_button = customtkinter.CTkButton(self.login_frame, text="Login", command=self.login_event,
-                                                    width=100)
-        self.login_button.grid(row=4, column=0, pady=(0, 10))
-        self.reg_lab = customtkinter.CTkLabel(self.login_frame, text="Не имеешь аккаунта?",
-                                              font=("Roboto", 16, "bold"))
-        self.reg_lab.grid(row=5, column=0, pady=(50, 10))
-        self.reg_but = customtkinter.CTkButton(self.login_frame, text="Sign In", command=self.open_sign_in_window,
-                                               width=75)
-        self.reg_but.grid(row=6, column=0)
-        self.exit_button = customtkinter.CTkButton(self.login_frame, text="Exit", width=40, height=30,
-                                                   command=self.exit_from_form)
-        self.exit_button.grid(row=7, column=0, pady=(200, 0))
-
-    def login_event(self):
-        print("Login pressed - username:", self.username_entry.get(), "password:", self.password_entry.get())
-
-        # Check login credentials (replace this with your actual authentication logic)
-        if authenticate(self.username_entry.get() and self.password_entry.get()):
-
-            # Open the BricksApp window upon successful login
-            self.BricksApp = BricksApp(self)
-
-        else:
-            print("Login failed. Invalid credentials.")
-
-    def open_sign_in_window(self):
-
-        self.SignIn = SignIn(self, exit_command=self.exit_from_form)
-
-    def exit_from_form(self):
-        self.destroy()
-        pass
-
-
 app = Auth()
 app.mainloop()
-"""
 
-        count_stones = 0
-        count_scissors = 0
-        count_papers = 0
-        victories = 0
-        losses = 0
-        draws = 0
-
-        result = customtkinter.CTkLabel(self, text=f"Здравствуйте, {self.player_list[0]}",
-                                        font=("Roboto", 43, "bold"), bg_color="#FFF")
-
-        def random_choice():
-            return choice([1, 2, 3])
-
-        def for_stone():
-            nonlocal count_stones, count_scissors, count_papers, victories, losses, draws
-            count_stones += 1
-            computer = random_choice()
-
-            if computer == 1:
-                result["text"] = "Компьютер выбрал камень – \nНичья"
-                count_stones += 1
-                draws += 1
-
-            elif computer == 2:
-                result["text"] = "Компьютер выбрал ножницы – \nПобеда"
-                count_scissors += 1
-                victories += 1
-
-            else:
-                result["text"] = "Компьютер выбрал бумагу – \nПроигрыш"
-                count_papers += 1
-                losses += 1
-
-        def for_scissors():
-            nonlocal count_stones, count_scissors, count_papers, victories, losses, draws
-            count_scissors += 1
-            computer = random_choice()
-
-            if computer == 1:
-                result["text"] = "Компьютер выбрал камень – \nПроигрыш"
-                count_stones += 1
-                losses += 1
-
-            elif computer == 2:
-                result["text"] = "Компьютер выбрал ножницы – \nНичья"
-                count_scissors += 1
-                draws += 1
-
-            else:
-                result["text"] = "Компьютер выбрал бумагу – \nПобеда"
-                count_papers += 1
-                victories += 1
-
-        def for_paper():
-            nonlocal count_stones, count_scissors, count_papers, victories, losses, draws
-            count_papers += 1
-            computer = random_choice()
-
-            if computer == 1:
-                result["text"] = "Компьютер выбрал камень – \nПобеда"
-                count_stones += 1
-                victories += 1
-
-            elif computer == 2:
-                result["text"] = "Компьютер выбрал ножницы – \nПроигрыш"
-                count_scissors += 1
-                losses += 1
-
-            else:
-                result["text"] = "Компьютер выбрал бумагу – \nНичья"
-                count_papers += 1
-                draws += 1
-
-        def statistics():
-            stat = Tk()
-            stat.title("Stat")  # Указание названия
-            stat.geometry("400x400+800+250")  # Установка размеров окна
-            stat.resizable(False, False)  # Заморозка масштабирования окна
-            stat.config(bg="#FFF")  # Установка фонового цвета - белый
-
-            customtkinter.CTkLabel(stat, text=f"Ваша статистика, {self.player_list[0]}", font=("Roboto", 17),
-                                   bg_color="#FFF").place(
-                relx=.5, rely=.05,
-                anchor="center")
-            customtkinter.CTkLabel(stat, text=f
-            #Всего игр: {victories + losses + draws}
-            #Побед: {victories}
-            #Поражений: {losses}
-            #Ничьих: {draws}
-            , font=("Roboto", 11),
-                                   bg_color="#FFF",
-                                   justify=customtkinter.CENTER,
-                                   width=15, height=5
-                                   ).place(relx=.5, rely=.19, anchor="center")
-
-            customtkinter.CTkLabel(stat, text="Выкинуто", font=("Roboto", 17), bg_color="#FFF").place(relx=.5,
-                                                                                                      rely=.37,
-                                                                                                      anchor="center")
-            customtkinter.CTkLabel(stat, text=f
-        Камней: {count_stones}
-        Ножниц: {count_scissors}
-        Бумаги: {count_papers}
-        , font=("Roboto", 11),
-                                   bg_color="#FFF",
-                                   justify=customtkinter.CENTER,
-                                   width=15, height=3
-                                   ).place(relx=.5, rely=.5, anchor="center")
-
-            customtkinter.CTkLabel(stat, text=f"Вы – {self.player_list[3]}", font=("Roboto", 14),
-                                   bg_color="#FFF").place(
-                relx=.5,
-                rely=.65,
-                anchor="center")
-            customtkinter.CTkLabel(stat, text=f"Ваш любимый предмет – {self.player_list[4]}", font=("Roboto", 14),
-                                   bg_color="#FFF").place(relx=.5,
-                                                          rely=.73,
-                                                          anchor="center")
-            customtkinter.CTkLabel(stat, text=f"Ваша почта – {self.player_list[2]}", font=("Roboto", 14),
-                                   bg_color="#FFF").place(
-                relx=.5, rely=.81,
-                anchor="center")
-
-            def save_stat():
-                self.update_data()
-                mb.showinfo("Информация", "Статистика сохранена")
-
-            customtkinter.CTkButton(stat, text="Cохранить статистику", font=("Roboto", 14), bg="#FFF",
-                                    border_width=1,
-                                    command=save_stat).place(relx=.5,
-                                                             rely=.92,
-                                                             anchor="center")
-
-        def rating():
-            rating_win = Tk()
-            rating_win.title("Рейтинг")  # Указание названия
-            rating_win.geometry("400x400+800+250")  # Установка размеров окна
-            rating_win.resizable(False, False)  # Заморозка масштабирования окна
-            rating_win.config(bg="#FFF")  # Установка фонового цвета - белый
-
-            customtkinter.CTkLabel(rating_win, text="Рейтинг побед", font=("Roboto", 16), bg_color="#FFF").place(
-                relx=.5,
-                rely=.1,
-                anchor="center")
-
-            rating_field = customtkinter.CTkTextbox(rating_win, width=36, border_width=0, height=16,
-                                                    font=("Roboto", 15),
-                                                    bg="#FFF")
-            rating_field.place(relx=.54, rely=.2, anchor="n")
-
-            scroll = customtkinter.CTkScrollbar(rating_win, command=rating_field.yview)
-            scroll.pack(side=customtkinter.RIGHT, fill=customtkinter.Y)
-            rating_field.config(yscrollcommand=scroll.set)
-
-            file = open('DatabaseForGame.txt')
-
-            rating_dict = {}
-            for line in file:
-                player_name = line.split('%%')[0]
-                player_vict = int(line.split('%%')[8])
-                rating_dict[player_name] = player_vict
-
-            sorted_rating = sorted(rating_dict.items(), key=lambda item: item[1], reverse=True)
-
-            for i in range(len(sorted_rating)):
-                rating_field.insert(customtkinter.END, f"{i + 1}. {sorted_rating[i][0]}: {sorted_rating[i][1]}\n")
-
-        def exit_to_main():
-            if mb.askokcancel("Выход", "Вы действительно хотите выйти в меню?"):
-                self.destroy()
-                self.log_in()
-
-        customtkinter.CTkButton(self, text="Назад", font=("Roboto", 10, "bold"),
-                                width=18, height=1, border_width=1,
-                                command=exit_to_main
-                                ).place(relx=.02, rely=.02)
-
-        customtkinter.CTkButton(self, text="Камень", font=("Roboto", 14), border_width=1, command=for_stone).place(
-            relx=.35,
-            rely=.75,
-            anchor="center")
-
-        customtkinter.CTkButton(self, text="Ножницы", font=("Roboto", 14), border_width=1,
-                                command=for_scissors).place(
-            relx=.5, rely=.75,
-            anchor="center")
-
-        customtkinter.CTkButton(self, text="Бумага", font=("Roboto", 14), border_width=1, command=for_paper).place(
-            relx=.65,
-            rely=.75,
-            anchor="center")
-
-        customtkinter.CTkButton(self, text="Статистика", font=("Roboto", 14), border_width=1,
-                                command=statistics).place(
-            relx=.2, rely=.02,
-            anchor="center")
-
-        customtkinter.CTkButton(self, text="Рейтинг", font=("Roboto", 14), border_width=1, command=rating).place(
-            relx=.8,
-            rely=.02,
-            anchor="center")
-
-        result.place(relx=.5, rely=.5, anchor="center")
-    pass
-        
-        
-
-
-
-if __name__ == "__main__":
-    app = Auth()
-    app.mainloop()
-"""
