@@ -92,9 +92,11 @@ class CustomTkinter(customtkinter.CTk):
         gen_lab = customtkinter.CTkLabel(self, text="Пол", font=("Roboto", 9, "bold"), bg_color="#FFF")
         gen_lab.place(relx=.5, rely=.6, anchor="center")
         gender = customtkinter.StringVar()
-        female_rad = customtkinter.CTkRadioButton(app, text="Женщина", fg_color="#FFF", value="Женщина", variable=gender)
+        female_rad = customtkinter.CTkRadioButton(text="Женщина", bg="#FFF", value="Женщина", variable=gender,
+                                                  padx=15, pady=10, master=app)
         female_rad.place(relx=.46, rely=.64, anchor="center")
-        male_rad = customtkinter.CTkRadioButton(app, text="Мужчина", fg_color="#FFF", value="Мужчина", variable=gender)
+        male_rad = customtkinter.CTkRadioButton(text="Мужчина", bg="#FFF", value="Мужчина", variable=gender, padx=15,
+                                                pady=10, master=app)
         male_rad.place(relx=.53, rely=.64, anchor="center")
 
         fav_lab = customtkinter.CTkLabel(self, text="Выберите любимый предмет", font=("Roboto", 9, "bold"),
@@ -352,10 +354,10 @@ class CustomTkinter(customtkinter.CTk):
                 relx=.5, rely=.05,
                 anchor="center")
             customtkinter.CTkLabel(stat, text=f"""
-            Всего игр: {victories + losses + draws}
-            Побед: {victories}
-            Поражений: {losses}
-            Ничьих: {draws}
+            # Всего игр: {victories + losses + draws}
+            # Побед: {victories}
+            # Поражений: {losses}
+            # Ничьих: {draws}
         """, font=("Roboto", 11),
                                    bg_color="#FFF",
                                    justify=customtkinter.CENTER,
@@ -366,9 +368,9 @@ class CustomTkinter(customtkinter.CTk):
                                                                                                       rely=.37,
                                                                                                       anchor="center")
             customtkinter.CTkLabel(stat, text=f"""
-        Камней: {count_stones}
-        Ножниц: {count_scissors}
-        Бумаги: {count_papers}
+        # Камней: {count_stones}
+        # Ножниц: {count_scissors}
+        # Бумаги: {count_papers}
         """, font=("Roboto", 11),
                                    bg_color="#FFF",
                                    justify=customtkinter.CENTER,
@@ -500,7 +502,7 @@ class SignIn(customtkinter.CTkToplevel):
 
         # Load and create background image
         current_path = os.path.dirname(os.path.realpath(__file__))
-        image_path = os.path.join(current_path, "img", "background.jpg")
+        image_path = os.path.join(current_path, "img", "bg_gradient.jpg")
         self.bg_image = customtkinter.CTkImage(Image.open(image_path), size=(900, 600))
         self.bg_image_label = customtkinter.CTkLabel(self, image=self.bg_image)
         self.bg_image_label.grid(row=0, column=0)
@@ -518,17 +520,21 @@ class SignIn(customtkinter.CTkToplevel):
         self.password_entry.grid(row=2, column=0, padx=30, pady=(0, 15))
         self.mail_entry = customtkinter.CTkEntry(self.login_frame, width=200, placeholder_text="email")
         self.mail_entry.grid(row=3, column=0, padx=30, pady=(0, 15))
-        self.login_button = customtkinter.CTkButton(self.login_frame, text="Login", command=self.login_event,
+        self.login_button = customtkinter.CTkButton(self.login_frame, text="Sign In", command=self.login_event,
                                                     width=100)
         self.login_button.grid(row=4, column=0, pady=(0, 10))
-        self.reg_lab = customtkinter.CTkLabel(self.login_frame, text="Не имеешь аккаунта?",
-                                              font=("Roboto", 16, "bold"))
-        self.reg_lab.grid(row=5, column=0, pady=(50, 10))
-        self.reg_but = customtkinter.CTkButton(self.login_frame, text="Sign In", command=self.sign_in, width=75)
-        self.reg_but.grid(row=6, column=0)
+        current_path1 = os.path.dirname(os.path.realpath(__file__))
+        image_path1 = os.path.join(current_path1, "img", "bg_gradient.jpg")
+        self.bg_image = customtkinter.CTkImage(Image.open(image_path1), size=(50, 50))
+        self.return_button = customtkinter.CTkButton(self.login_frame, command=self.return_back, width=100)
+        self.return_button.grid(row=5, column=0)
+
         self.exit_button = customtkinter.CTkButton(self.login_frame, text="Exit", width=40, height=30,
                                                    command=self.exit_from_form)
         self.exit_button.grid(row=7, column=0, pady=(200, 0))
+
+    def return_back(self):
+        self.Auth = Auth(self)
 
 
 class BricksApp(customtkinter.CTkToplevel):
@@ -733,8 +739,6 @@ class Auth(customtkinter.CTk):
         self.password_entry = customtkinter.CTkEntry(self.login_frame, width=200, show="*",
                                                      placeholder_text="password")
         self.password_entry.grid(row=2, column=0, padx=30, pady=(0, 15))
-        self.mail_entry = customtkinter.CTkEntry(self.login_frame, width=200, placeholder_text="email")
-        self.mail_entry.grid(row=3, column=0, padx=30, pady=(0, 15))
         self.login_button = customtkinter.CTkButton(self.login_frame, text="Login", command=self.login_event,
                                                     width=100)
         self.login_button.grid(row=4, column=0, pady=(0, 10))
@@ -797,8 +801,8 @@ class Auth(customtkinter.CTk):
 
 app = Auth()
 app.mainloop()
-
 """
+
         count_stones = 0
         count_scissors = 0
         count_papers = 0
