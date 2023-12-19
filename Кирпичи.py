@@ -565,11 +565,15 @@ class Auth(customtkinter.CTk):
         self.BricksApp = BricksApp(self, player_login)
 
     def add_new_user(self, player_login, player_password, player_email, player_gender, player_age_range):
-        """Функция записи данных пользователя в файл"""
-        file = open('DatabaseForGame.txt', 'a')
-        file.write(
-            f"{'%%'.join([player_login, player_password, player_email, player_gender, player_age_range, '0', '0', '0', '0', '0', '0'])}\n")
-        file.close()
+        """Function to write user data to the file"""
+        file_path = f'{player_login}_user_statistics.txt'  # Use a unique file for each user
+        with open(file_path, 'w') as file:
+            file.write("0 0\n")  # Initialize user statistics to 0 games won and 0 total games
+
+        file_path = 'DatabaseForGame.txt'
+        with open(file_path, 'a') as file:
+            file.write(
+                f"{'%%'.join([player_login, player_password, player_email, player_gender, player_age_range, '0', '0', '0', '0', '0', '0'])}\n")
 
     def check_user_log(self, login, password):
         file = open('DatabaseForGame.txt')
@@ -592,8 +596,8 @@ class Auth(customtkinter.CTk):
         self.destroy()
 
     def open_sign_in_window(self):
-        self.SignIn = SignIn(master=self, exit_command=self.exit_from_form, register_command=self.register_event,
-                             auth_instance=self)
+        self.SignIn = SignIn(master=self, exit_command=self.exit_from_form,
+                             register_command=self.register_event, auth_instance=self)
         self.SignIn.focus_force()
 
 
@@ -603,7 +607,6 @@ class SignIn(customtkinter.CTkToplevel):
 
         self.attributes("-topmost", True)
 
-        self.player_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.exit_from_form = exit_command
         self.register_event = register_command
 
@@ -710,6 +713,22 @@ class SignIn(customtkinter.CTkToplevel):
         self.destroy()
 
 
+class Statistics(customtkinter.CTkToplevel):
+    def __init__(self, master, player_list):
+        super().__init__(self, master)
+
+        self.player_list = player_list
+        self.attributes("-topmost", True)
+
+        self.title("Stat")  # Указание названия
+        self.geometry("400x400+800+250")  # Установка размеров окна
+        self.resizable(False, False)  # Заморозка масштабирования окна
+        self.config(bg="#FFF")  # Установка фонового цвета - белый
+
+        self.back_button = customtkinter.CTkButton(self, text="Back to Game", command=self.destroy)
+        self.back_button.place(relx=0.5, rely=0.9, anchor="s")
+
+
 class BricksApp(customtkinter.CTkToplevel):
 
     def __init__(self, master=None, username=""):
@@ -719,10 +738,12 @@ class BricksApp(customtkinter.CTkToplevel):
         self.geometry("900x600")
         self.resizable(False, False)
 
-        self.username = username
+        self.attributes("-topmost", True)
 
-        self.victories = 0
-        self.losses = 0
+        self.username = username
+        self.player_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+        self.win_statistics_count = 0
 
         # Load and create background image
         current_path = os.path.dirname(os.path.realpath(__file__))
@@ -731,24 +752,27 @@ class BricksApp(customtkinter.CTkToplevel):
         self.bg_image_label = customtkinter.CTkLabel(self, image=self.bg_image)
         self.bg_image_label.grid(row=0, column=0)
 
+        self.greeting_label = customtkinter.CTkLabel(self, text=f"Hello, {self.username}",
+                                                     font=("Roboto", 43, "bold"))
+        self.greeting_label.grid(row=0, column=0, sticky="N", pady=5)
         # Number of remaining bricks
-        self.bricks_label = customtkinter.CTkLabel(master=self, text="Remaining Bricks 🧱:",
+        self.bricks_label = customtkinter.CTkLabel(self, text="Remaining Bricks 🧱:",
                                                    font=customtkinter.CTkFont(size=20, weight="bold"))
-        self.bricks_label.grid(row=0, column=0, sticky="N", pady=5)
+        self.bricks_label.grid(row=0, column=0, sticky="N", pady=80)
         self.bricks_amount = randint(12, 20)  # Assuming bricks_amount will be set later
         self.remaining_bricks_var = customtkinter.StringVar(value=str(self.bricks_amount))
         self.remaining_bricks_string = customtkinter.CTkLabel(master=self, textvariable=self.remaining_bricks_var,
                                                               font=customtkinter.CTkFont(size=20, weight="bold"))
-        self.remaining_bricks_string.grid(row=0, column=0, sticky="N", pady=40)
+        self.remaining_bricks_string.grid(row=0, column=0, sticky="N", pady=120)
 
         # Frame for human player's turn
-        self.human_turn_frame = customtkinter.CTkFrame(master=self)
-        self.human_turn_frame.grid(row=0, column=0, sticky="w")
+        self.human_turn_frame = customtkinter.CTkFrame(self)
+        self.human_turn_frame.grid(row=0, column=0, sticky="W")
 
         # Label for human player's turn
         self.human_turn_label = customtkinter.CTkLabel(self.human_turn_frame, text="Your turn:",
                                                        font=customtkinter.CTkFont(size=20, weight="bold"))
-        self.human_turn_label.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.human_turn_label.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="W")
 
         # Buttons for human player's turn
         self.take_one = customtkinter.CTkButton(self.human_turn_frame, text="Take 1", width=100,
@@ -780,7 +804,7 @@ class BricksApp(customtkinter.CTkToplevel):
 
         # Win statistics
         self.win_statistics_count = 0
-        self.win_statistics_label = customtkinter.CTkLabel(self, text="Games Won: 0",
+        self.win_statistics_label = customtkinter.CTkLabel(self, text=f"Games Won: {0}",
                                                            font=customtkinter.CTkFont(size=14))
         self.win_statistics_label.place(relx=0.5, rely=1, anchor="s")
 
@@ -793,7 +817,7 @@ class BricksApp(customtkinter.CTkToplevel):
         dropdown1 = CustomDropdownMenu(widget=button_1)
         dropdown1.add_option(option="New game", command=lambda: self.play_again())
         dropdown1.add_option(option="Main menu")
-        dropdown1.add_option(option="Statistics")
+        dropdown1.add_option(option="Statistics", command=lambda: self.statistics())
         dropdown1.add_option(option="Exit", command=lambda: self.exit_the_game())
 
     def turn(self, amount):
@@ -805,6 +829,9 @@ class BricksApp(customtkinter.CTkToplevel):
         if self.bricks_amount == 0:
             # Human wins
             self.win_statistics_count += 1
+            self.statistics()
+            self.update_user_statistics(1, 1)
+            self.update_all_users_statistics(self.username, 1, 1)  # Update all users statistics
             self.result_game = customtkinter.CTkLabel(self, text="Вы победили!", fg_color="green")
             self.result_game.place(relx=0.5, rely=0.5, anchor="center")
             self.disable()
@@ -836,6 +863,14 @@ class BricksApp(customtkinter.CTkToplevel):
 
             # Update the text for remaining bricks
             self.remaining_bricks_var.set(str(self.bricks_amount))
+
+            if self.bricks_amount == 0:
+                # Computer wins
+                self.statistics()
+                self.update_all_users_statistics(self.username, 0, 1)  # Update all users statistics
+                self.result_game = customtkinter.CTkLabel(self, text="Вы проиграли", fg_color="red")
+                self.result_game.place(relx=0.5, rely=0.5, anchor="center")
+                self.disable()
 
             # Disable buttons when there are fewer bricks than available for the human to choose
             if self.bricks_amount == 1:
@@ -870,14 +905,88 @@ class BricksApp(customtkinter.CTkToplevel):
         self.result_game.place_forget()
         self.enable_buttons()
 
+    # Add this method to the BricksApp class
+    def statistics(self):
+        user_statistics = self.get_user_statistics()
+        all_users_statistics = self.get_all_users_statistics()
+
+        message = f"Your Statistics:\nGames Won: {user_statistics['games_won']}\nTotal Games: {user_statistics['total_games']}\n\n"
+        message += "All Users Statistics:\n"
+        for i, stats in enumerate(all_users_statistics, start=1):
+            message += f"{i}. Username: {stats['username']}, Games Won: {stats['games_won']}, Total Games: {stats['total_games']}\n"
+
+        # Update the label showing games won in the Statistics window
+        self.win_statistics_label.configure(text=f"Games Won: {user_statistics['games_won']}")
+
+        # Update the label showing games won in the main window
+        if hasattr(self.master, 'win_statistics_label'):
+            self.master.win_statistics_label.configure(text=f"Games Won: {user_statistics['games_won']}")
+
+        messagebox.showinfo("Statistics", message, parent=self)
+
+    def get_user_statistics(self):
+        # Load user statistics from the individual file
+        user_stats = {"games_won": 0, "total_games": 0}
+        try:
+            file_path = f'{self.username}_user_statistics.txt'
+            with open(file_path, 'r') as file:
+                lines = file.readlines()
+                if lines:
+                    user_stats["games_won"], user_stats["total_games"] = map(int, lines[0].split())
+        except FileNotFoundError:
+            pass
+
+        return user_stats
+
+    def update_user_statistics(self, games_won, total_games):
+        # Update and save user statistics to the individual file
+        user_stats = self.get_user_statistics()
+        user_stats["games_won"] += games_won
+        user_stats["total_games"] += total_games
+
+        file_path = f'{self.username}_user_statistics.txt'
+        with open(file_path, 'w') as file:
+            file.write(f"{user_stats['games_won']} {user_stats['total_games']}")
+
+    def get_all_users_statistics(self):
+        # Load and return statistics for all users
+        all_users_stats = []
+        try:
+            with open('all_users_statistics.txt', 'r') as file:
+                for line in file:
+                    username, games_won, total_games = line.split()
+                    all_users_stats.append(
+                        {"username": username, "games_won": int(games_won), "total_games": int(total_games)})
+        except FileNotFoundError:
+            pass
+
+        return sorted(all_users_stats, key=lambda x: x["games_won"], reverse=True)
+
+    def update_all_users_statistics(self, username, games_won, total_games):
+        # Update and save statistics for all users to file
+        all_users_stats = self.get_all_users_statistics()
+        existing_user = next((user for user in all_users_stats if user["username"] == username), None)
+
+        if existing_user:
+            existing_user["games_won"] += games_won
+            existing_user["total_games"] += total_games
+        else:
+            all_users_stats.append({"username": username, "games_won": games_won, "total_games": total_games})
+
+        with open('all_users_statistics.txt', 'w') as file:
+            for user in all_users_stats:
+                file.write(f"{user['username']} {user['games_won']} {user['total_games']}\n")
+
+    # ... (existing code remains unchanged)
+
     def exit_the_game(self):
         self.save()
         self.quit()
 
     def save(self):
-        file_save = open('Statistics.txt', 'w')
-        file_save.write(f"Games Won: {self.win_statistics_count}")
-        file_save.close()
+        # Save user statistics and update all users statistics
+        self.update_user_statistics(self.win_statistics_count, 1)
+        self.update_all_users_statistics(self.username, self.win_statistics_count, 1)
 
 
 def authenticate(password):
@@ -888,4 +997,3 @@ def authenticate(password):
 
 app = Auth()
 app.mainloop()
-
