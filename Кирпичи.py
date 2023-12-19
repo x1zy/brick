@@ -45,7 +45,7 @@ class Auth(customtkinter.CTk):
         self.login_button = customtkinter.CTkButton(self.login_frame, text="Login", command=self.login_event,
                                                     width=100)
         self.login_button.grid(row=4, column=0, pady=(0, 10))
-        self.reg_lab = customtkinter.CTkLabel(self.login_frame, text="Не имеешь аккаунта?",
+        self.reg_lab = customtkinter.CTkLabel(self.login_frame, text="Don't have an account?",
                                               font=("Roboto", 16, "bold"))
         self.reg_lab.grid(row=5, column=0, pady=(50, 10))
         self.reg_but = customtkinter.CTkButton(self.login_frame, text="Sign In", command=self.open_sign_in_window,
@@ -185,21 +185,21 @@ class SignIn(customtkinter.CTkToplevel):
         self.mail_entry.grid(row=3, column=0, padx=30, pady=(0, 15))
 
         self.gen_lab = customtkinter.CTkLabel(
-            self.login_frame, text="Выберите пол", font=(
+            self.login_frame, text="Select gender", font=(
                 "Roboto", 16, "bold"))
         self.gen_lab.grid(row=4, column=0, pady=10)
 
         self.gender = customtkinter.StringVar()
-        self.female_rad = customtkinter.CTkRadioButton(self.login_frame, text="Женщина", fg_color="#FFF",
+        self.female_rad = customtkinter.CTkRadioButton(self.login_frame, text="Woman", fg_color="#FFF",
                                                        value="Женщина",
                                                        variable=self.gender)
         self.female_rad.grid(row=5, column=0, pady=10)
-        self.male_rad = customtkinter.CTkRadioButton(self.login_frame, text="Мужчина", fg_color="#FFF", value="Мужчина",
+        self.male_rad = customtkinter.CTkRadioButton(self.login_frame, text="Man", fg_color="#FFF", value="Мужчина",
                                                      variable=self.gender)
         self.male_rad.grid(row=6, column=0, pady=10)
 
         # Создаем список
-        self.age_lab = customtkinter.CTkLabel(self.login_frame, text="Укажите свой диапазон \n возраста",
+        self.age_lab = customtkinter.CTkLabel(self.login_frame, text="State your age \n range",
                                               font=("Roboto", 16, "bold"))
         self.age_lab.grid(row=7, column=0, pady=(20, 20))
 
@@ -399,7 +399,7 @@ class BricksApp(customtkinter.CTkToplevel):
             self.update_all_users_statistics(
                 self.username, 1, 1)  # Update all users statistics
             self.result_game = customtkinter.CTkLabel(
-                self, text="Вы победили!", fg_color="green")
+                self, text="You Win!", fg_color="green", width=75, height=50)
             self.result_game.place(relx=0.5, rely=0.5, anchor="center")
             self.disable()
         elif self.bricks_amount < 4:
@@ -407,7 +407,7 @@ class BricksApp(customtkinter.CTkToplevel):
             self.comp_do_var.set("Взял {0}".format(self.bricks_amount))
             self.bricks_amount = 0
             self.result_game = customtkinter.CTkLabel(
-                self, text="Вы проиграли", fg_color="red")
+                self, text="You Lose", fg_color="red", width=75, height=50)
             self.result_game.place(relx=0.5, rely=0.5, anchor="center")
             self.disable()
 
@@ -439,7 +439,7 @@ class BricksApp(customtkinter.CTkToplevel):
                 self.update_all_users_statistics(
                     self.username, 0, 1)  # Update all users statistics
                 self.result_game = customtkinter.CTkLabel(
-                    self, text="Вы проиграли", fg_color="red")
+                    self, text="You lose", fg_color="red")
                 self.result_game.place(relx=0.5, rely=0.5, anchor="center")
                 self.disable()
 
@@ -455,7 +455,7 @@ class BricksApp(customtkinter.CTkToplevel):
             if self.bricks_amount == 0:
                 # Computer wins
                 self.result_game = customtkinter.CTkLabel(
-                    self, text="Вы проиграли", fg_color="red")
+                    self, text="You lose", fg_color="red")
                 self.result_game.place(relx=0.5, rely=0.5, anchor="center")
                 self.disable()
 
